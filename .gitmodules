@@ -1,0 +1,6 @@
+[submodule "eqint-savvy-desktop"]
+	path = eqint-savvy-desktop
+	url = https://github.com/Chetanya-Kaushal/eqint-savvy-desktop.git
+[submodule "hcm-ai-agent"]
+	path = hcm-ai-agent
+	url = https://github.com/Chetanya-Kaushal/hcm-ai-agent.git

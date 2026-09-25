@@ -1,0 +1,63 @@
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Test artifacts
+test-results/
+coverage/
+
+# Temporary
+*.tmp
+*.temp
+.tmp/
+
+# Docker
+.docker/
+
+# Database
+*.db
+*.sqlite3
+
+# Submodules (don't ignore - they're part of the repo)
+# eqint-savvy-desktop/
+# hcm-ai-agent/

@@ -1,0 +1,32 @@
+{
+  "name": "eqint-savvy-full",
+  "version": "1.0.0",
+  "description": "EQInt Savvy - Full Application Monorepo (Electron Desktop + HCM AI Python Backend)",
+  "private": true,
+  "scripts": {
+    "start": "node start.js",
+    "start:win": "start-windows.bat",
+    "install:all": "npm run install:desktop && npm run install:python",
+    "install:desktop": "cd eqint-savvy-desktop && npm install && cd backend/services/api && npm install && npx prisma generate && npx prisma migrate deploy",
+    "install:python": "cd hcm-ai-agent && python -m venv venv && venv/bin/pip install -r requirements.txt",
+    "docker:up": "cd eqint-savvy-desktop/backend && docker-compose up -d",
+    "docker:down": "cd eqint-savvy-desktop/backend && docker-compose down",
+    "dev:python": "cd hcm-ai-agent && venv/bin/python -m uvicorn src.api.server:app --host 0.0.0.0 --port 8080 --reload",
+    "dev:desktop": "cd eqint-savvy-desktop && npm run prestart && npm start",
+    "dev:api": "cd eqint-savvy-desktop/backend/services/api && npm run dev",
+    "build:desktop": "cd eqint-savvy-desktop && npm run build",
+    "submodule:update": "git submodule update --remote --merge",
+    "submodule:init": "git submodule update --init --recursive"
+  },
+  "keywords": [
+    "eqint",
+    "savvy",
+    "oracle-hcm",
+    "ai",
+    "payroll",
+    "reconciliation",
+    "electron"
+  ],
+  "author": "EQInt",
+  "license": "MIT"
+}
