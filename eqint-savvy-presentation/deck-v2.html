@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EQInt Global — Savvy AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══ AgentBuff viewport base (mandatory) ═══ */
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--stage-bg,#0A3D62)}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:var(--stage-bg,#0A3D62)}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:var(--slide-bg,#fff)}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;visibility:hidden;opacity:0;pointer-events:none;background:var(--slide-bg,#fff)}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+img,video,canvas,svg{max-width:100%;max-height:100%}
+.deck-controls{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:1000}
+@media print{
+  html,body{width:1920px;height:auto;overflow:visible;background:#fff}
+  .deck-viewport{position:static;overflow:visible;background:#fff}
+  .deck-stage{position:static;width:auto;height:auto;transform:none!important;background:none}
+  .slide{position:relative;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto;width:1920px;height:1080px;break-after:page;page-break-after:always}
+  .slide:last-child{break-after:auto;page-break-after:auto}
+  .deck-controls{display:none!important}
+}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.2s!important}}
+
+/* ═══ EQInt brand system (from eqintglobal.com) ═══ */
+:root{
+  --paper:#FFFFFF; --paper2:#F4F8F6; --ink:#0A3D62; --ink2:#3E5A74; --mut:#7A8FA3;
+  --green:#00A651; --blue:#00509E; --sky:#005C97; --line:#DCE5EC;
+  --greenT:rgba(0,166,81,.08); --blueT:rgba(0,80,158,.06);
+  --stage-bg:#0A3D62; --slide-bg:#FFFFFF;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.slide{font-family:'IBM Plex Sans',-apple-system,'Segoe UI',sans-serif;color:var(--ink)}
+.mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+
+/* brand field: white canvas with soft green/blue atmosphere */
+.slide::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(900px 620px at 88% -8%, var(--greenT), transparent 62%),
+    radial-gradient(820px 560px at -6% 108%, var(--blueT), transparent 62%);}
+/* brand top rule */
+.slide::after{content:'';position:absolute;top:0;left:0;right:0;height:8px;
+  background:linear-gradient(90deg,var(--green) 0%,var(--green) 34%,var(--blue) 34%,var(--blue) 78%,var(--sky) 78%);}
+
+.pad{position:absolute;inset:0;padding:96px 110px;display:flex;flex-direction:column}
+
+/* kickers, titles */
+.kick{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:500;letter-spacing:.32em;
+  text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:18px}
+.kick::before{content:'';width:44px;height:2px;background:var(--green)}
+h1{font-family:'Sora',sans-serif;font-weight:800;font-size:104px;line-height:1.02;letter-spacing:-.025em;color:var(--ink)}
+h2{font-family:'Sora',sans-serif;font-weight:700;font-size:64px;line-height:1.05;letter-spacing:-.02em;color:var(--ink)}
+.g{color:var(--green)}.b{color:var(--blue)}
+.lede{font-size:25px;line-height:1.6;color:var(--ink2);max-width:1180px}
+.lede b{color:var(--ink);font-weight:600}
+
+/* reveals (restart on slide re-entry via class re-add) */
+.slide.active .rv{opacity:0;transform:translateY(26px);animation:rv .8s cubic-bezier(.22,1,.36,1) forwards}
+.slide.active .d1{animation-delay:.08s}.slide.active .d2{animation-delay:.2s}
+.slide.active .d3{animation-delay:.32s}.slide.active .d4{animation-delay:.44s}
+.slide.active .d5{animation-delay:.58s}.slide.active .d6{animation-delay:.72s}
+.slide.active .d7{animation-delay:.86s}
+@keyframes rv{to{opacity:1;transform:none}}
+
+/* cards */
+.cards{display:grid;gap:26px}
+.c3{grid-template-columns:repeat(3,1fr)}
+.card{background:#fff;border:1px solid var(--line);border-radius:22px;padding:38px;
+  box-shadow:0 14px 40px rgba(10,61,98,.07);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;width:64px;height:5px;border-radius:0 0 5px 0;background:var(--green)}
+.card h3{font-family:'Sora',sans-serif;font-size:27px;font-weight:700;color:var(--ink);margin:20px 0 12px}
+.card p{font-size:18.5px;line-height:1.62;color:var(--ink2)}
+.icn{width:64px;height:64px;border-radius:16px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(150deg,var(--greenT),var(--blueT));border:1px solid var(--line)}
+.icn svg{width:30px;height:30px;stroke:var(--green);fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* stat tiles */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.stat{background:linear-gradient(180deg,#fff,var(--paper2));border:1px solid var(--line);border-radius:22px;
+  padding:36px;text-align:center;box-shadow:0 14px 40px rgba(10,61,98,.06)}
+.stat .n{font-family:'Sora',sans-serif;font-size:76px;font-weight:800;color:var(--green);letter-spacing:-.02em}
+.stat .l{font-size:17px;color:var(--ink2);margin-top:6px;font-weight:500}
+
+/* service chips */
+.chips{display:flex;flex-wrap:wrap;gap:14px}
+.chip{padding:13px 24px;border-radius:999px;background:#fff;border:1.5px solid var(--line);
+  font-size:17.5px;font-weight:600;color:var(--ink2)}
+.chip b{color:var(--blue)}
+.chip.hot{border-color:var(--green);color:var(--green);background:var(--greenT)}
+
+/* mock windows (light brand chrome) */
+.split{display:grid;grid-template-columns:760px 1fr;gap:80px;align-items:center;flex:1;min-height:0}
+.split>*{min-width:0}
+.win{background:#fff;border:1px solid var(--line);border-radius:24px;overflow:hidden;
+  box-shadow:0 40px 90px rgba(10,61,98,.16),0 4px 16px rgba(10,61,98,.08)}
+.wbar{display:flex;align-items:center;gap:9px;padding:18px 22px;background:var(--paper2);border-bottom:1px solid var(--line)}
+.wdot{width:14px;height:14px;border-radius:50%}
+.wr{background:#FF5F57}.wy{background:#FEBC2E}.wg{background:#28C840}
+.wt{margin-left:12px;font-family:'IBM Plex Mono',monospace;font-size:14.5px;color:var(--mut);letter-spacing:.04em}
+.wbody{padding:26px}
+.sshot{display:block;width:100%;height:auto;background:#fff}
+.slide.active .win{opacity:0;transform:translateY(36px) scale(.965);animation:rv .9s cubic-bezier(.22,1,.36,1) .3s forwards}
+
+/* payroll mock */
+.prow{display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:14px;background:var(--paper2);
+  border:1px solid var(--line);margin-bottom:12px;font-size:16.5px;color:var(--ink2)}
+.prow .nm{color:var(--ink);font-weight:600;font-size:17.5px}
+.badge{margin-left:auto;padding:6px 16px;border-radius:999px;font-size:12.5px;font-weight:700;letter-spacing:.08em}
+.badge.ok{background:rgba(0,166,81,.12);color:var(--green);border:1px solid rgba(0,166,81,.35)}
+.badge.scan{background:rgba(0,80,158,.1);color:var(--blue);border:1px solid rgba(0,80,158,.32);animation:blink 1.2s ease-in-out infinite}
+@keyframes blink{50%{opacity:.45}}
+.slide.active .prow{opacity:0;transform:translateX(-16px);animation:rv .5s ease forwards}
+.slide.active .prow:nth-child(1){animation-delay:.75s}.slide.active .prow:nth-child(2){animation-delay:1s}
+.slide.active .prow:nth-child(3){animation-delay:1.25s}.slide.active .prow:nth-child(4){animation-delay:1.5s}
+.pbar{height:10px;border-radius:99px;background:#E4ECF2;overflow:hidden;margin-top:18px}
+.pfill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--green))}
+.slide.active .pfill{animation:fill 2.8s cubic-bezier(.22,1,.36,1) .9s forwards}
+@keyframes fill{92%{width:96%}to{width:96%}}
+
+/* OCR mock */
+.scan{position:relative;overflow:hidden;border-radius:14px;border:1px solid var(--line);background:var(--paper2);padding:22px}
+.scan::after{content:'';position:absolute;left:0;right:0;top:-45%;height:36%;
+  background:linear-gradient(180deg,transparent,rgba(0,166,81,.22),transparent);animation:scan 2.1s ease-in-out infinite}
+@keyframes scan{to{top:120%}}
+.tl{height:11px;border-radius:7px;background:#DCE5EC;margin-bottom:14px}
+.tl.w90{width:90%}.tl.w65{width:65%}.tl.w80{width:80%}
+.tl.hl{background:linear-gradient(90deg,var(--green),#27C46F);box-shadow:0 0 14px rgba(0,166,81,.35)}
+.frow{display:flex;gap:14px;margin-top:18px}
+.fld{flex:1;padding:14px 16px;border-radius:13px;background:#fff;border:1px solid var(--line);font-size:13px;
+  color:var(--mut);font-weight:600;letter-spacing:.1em}
+.fld b{display:block;color:var(--ink);font-size:16.5px;margin-top:5px;letter-spacing:0}
+
+/* dashboard mock */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.kpi{padding:16px;border-radius:15px;background:var(--paper2);border:1px solid var(--line)}
+.kpi .lab{font-size:12px;color:var(--mut);font-weight:600;letter-spacing:.12em}
+.kpi .val{font-family:'Sora',sans-serif;font-size:28px;font-weight:800;margin-top:6px;color:var(--ink)}
+.kpi .val span{font-size:13px;font-weight:700;margin-left:8px}
+.up{color:var(--green)}.dn{color:#D6455D}
+.bars{display:flex;align-items:flex-end;gap:13px;height:150px;padding:8px 6px 0}
+.bar{flex:1;border-radius:9px 9px 4px 4px;background:linear-gradient(180deg,#2E7FD9,var(--blue));
+  transform-origin:bottom;transform:scaleY(0)}
+.slide.active .bar{animation:grow .9s cubic-bezier(.34,1.4,.44,1) forwards}
+.slide.active .bar:nth-child(1){animation-delay:1.05s}.slide.active .bar:nth-child(2){animation-delay:1.15s}
+.slide.active .bar:nth-child(3){animation-delay:1.25s}.slide.active .bar:nth-child(4){animation-delay:1.35s}
+.slide.active .bar:nth-child(5){animation-delay:1.45s}.slide.active .bar:nth-child(6){animation-delay:1.55s}
+.slide.active .bar:nth-child(7){animation-delay:1.65s}
+@keyframes grow{to{transform:scaleY(1)}}
+.bar.t{background:linear-gradient(180deg,#12C56E,var(--green))}
+
+/* roadmap */
+.road{position:relative;padding-left:56px;margin-top:44px}
+.road::before{content:'';position:absolute;left:17px;top:14px;bottom:14px;width:2px;background:var(--line)}
+.ritem{position:relative;margin-bottom:26px;background:#fff;border:1px solid var(--line);border-radius:20px;
+  padding:30px 36px;box-shadow:0 12px 34px rgba(10,61,98,.06)}
+.ritem .dotn{position:absolute;left:-56px;top:26px;width:36px;height:36px;border-radius:50%;
+  background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;
+  font-family:'Sora',sans-serif;font-weight:700;font-size:16px;box-shadow:0 0 0 6px #fff,0 8px 20px rgba(0,166,81,.4)}
+.ritem h3{font-family:'Sora',sans-serif;font-size:26px;font-weight:700;color:var(--ink)}
+.ritem p{font-size:18px;line-height:1.6;color:var(--ink2);margin-top:8px;max-width:1240px}
+.tag{display:inline-block;padding:6px 16px;border-radius:999px;background:rgba(0,80,158,.08);
+  border:1px solid rgba(0,80,158,.25);color:var(--blue);font-size:12.5px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;margin-left:16px;vertical-align:6px}
+
+/* footer strip inside slides */
+.foot{position:absolute;left:110px;right:110px;bottom:44px;display:flex;justify-content:space-between;
+  font-family:'IBM Plex Mono',monospace;font-size:14px;color:var(--mut);letter-spacing:.14em}
+.foot b{color:var(--green);font-weight:500}
+
+/* controls */
+.deck-controls{display:flex;align-items:center;gap:16px;background:rgba(255,255,255,.1);padding:8px 14px;border-radius:999px}
+.deck-controls button{width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.35);
+  background:rgba(255,255,255,.14);color:#fff;font-size:17px;cursor:pointer;transition:.2s}
+.deck-controls button:hover{background:rgba(255,255,255,.28)}
+.pgcount{font-family:'IBM Plex Mono',monospace;color:#fff;font-size:14px;letter-spacing:.16em;min-width:70px;text-align:center}
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+<!-- 1 · COVER -->
+<section class="slide active">
+  <div class="pad" style="justify-content:center">
+    <div class="kick rv d1">EQInt Global &nbsp;·&nbsp; Oracle Fusion Cloud Partner</div>
+    <h1 class="rv d2" style="margin-top:34px">Savvy <span class="g">AI</span></h1>
+    <h2 class="rv d3" style="font-weight:600;color:var(--ink2);font-size:42px;margin-top:14px">
+      An intelligent assistant for Oracle Fusion HCM — built by EQInt Global.</h2>
+    <p class="lede rv d4" style="margin-top:34px">A product presentation for business teams:
+      what Savvy does, the three tools you can use today, and where the platform goes next.</p>
+    <div class="chips rv d5" style="margin-top:44px">
+      <span class="chip hot">🌐 eqintglobal.com</span>
+      <span class="chip"><b>Oracle</b> Fusion Cloud</span>
+      <span class="chip"><b>Savvy</b> AI Platform</span>
+    </div>
+  </div>
+  <div class="foot"><span>EQINT GLOBAL</span><span><b>SAVVY AI</b> · 2026</span></div>
+</section>
+
+<!-- 2 · WHO WE ARE -->
+<section class="slide">
+  <div class="pad">
+    <div class="kick rv d1">01 · Who We Are</div>
+    <h2 class="rv d2" style="margin-top:26px">Your Oracle Fusion Cloud <span class="g">partner.</span></h2>
+    <p class="lede rv d3" style="margin-top:24px">EQInt Global helps organisations implement, integrate and
+      support <b>Oracle Fusion Cloud</b> across HCM, Supply Chain and Finance — with expert consultants
+      and round-the-clock support. We don't just deploy software; we make it work for the people who use it.</p>
+    <div class="stats rv d4" style="margin-top:44px">
+      <div class="stat"><div class="n">15+</div><div class="l">Years of Oracle experience</div></div>
+      <div class="stat"><div class="n">10+</div><div class="l">Countries served</div></div>
+      <div class="stat"><div class="n">50+</div><div class="l">Consultants & specialists</div></div>
+    </div>
+    <div class="chips rv d5" style="margin-top:44px">
+      <span class="chip"><b>Consulting</b> & Advisory</span>
+      <span class="chip"><b>Implementation</b> Services</span>
+      <span class="chip"><b>Application</b> Development</span>
+      <span class="chip"><b>Industry</b> Solutions</span>
+      <span class="chip"><b>24/7</b> Support</span>
+      <span class="chip hot"><b>AI</b> Consulting</span>
+    </div>
+  </div>
+  <div class="foot"><span>EQINT GLOBAL · WHO WE ARE</span><span>EQINTGLOBAL.COM</span></div>
+</section>
+
+<!-- 3 · THE CHALLENGE -->
+<section class="slide">
+  <div class="pad">
+    <div class="kick rv d1">02 · The Challenge</div>
+    <h2 class="rv d2" style="margin-top:26px">Powerful software. <span class="b">Precious time.</span></h2>
+    <p class="lede rv d3" style="margin-top:24px">Oracle Fusion gives HR and finance teams enterprise-grade
+      capability — but everyday questions still cost real hours:</p>
+    <div class="cards c3 rv d4" style="margin-top:46px">
+      <div class="card"><div class="icn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+        <h3>Repetitive verification</h3><p>Payroll must be reconciled line by line before every cycle — slow, manual, and error-prone under deadline pressure.</p></div>
+      <div class="card"><div class="icn"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 9h6M7 13h10"/></svg></div>
+        <h3>Complex screens</h3><p>Dense Oracle pages send users hunting through documentation instead of completing their work.</p></div>
+      <div class="card"><div class="icn"><svg viewBox="0 0 24 24"><path d="M4 19V5M4 19h16"/><path d="M8 15v-4M12 15V8M16 15v-6"/></svg></div>
+        <h3>Reporting overhead</h3><p>Every headcount or compliance question becomes another report request, export and spreadsheet.</p></div>
+    </div>
+    <p class="lede rv d5" style="margin-top:42px;font-size:23px">We asked a simple question:
+      <b>what if an AI colleague handled this instead?</b></p>
+  </div>
+  <div class="foot"><span>EQINT GLOBAL · THE CHALLENGE</span><span>EQINTGLOBAL.COM</span></div>
+</section>
+
+<!-- 4 · INTRODUCING SAVVY -->
+<section class="slide">
+  <div class="pad" style="justify-content:center">
+    <div class="split">
+      <div>
+        <div class="kick rv d1">03 · Introducing</div>
+        <h2 class="rv d2" style="margin-top:22px;font-size:56px">Savvy — an AI assistant <span class="g">for Oracle Fusion HCM.</span></h2>
+        <p class="lede rv d3" style="margin-top:22px;font-size:21.5px">Savvy runs alongside Oracle Fusion HCM as a
+          desktop assistant. It interprets business requests, reads live application screens, and validates
+          data across systems — reducing navigation, training and manual effort to a minimum.</p>
+        <div class="chips rv d4" style="margin-top:26px">
+          <span class="chip hot">Natural-language interface</span>
+          <span class="chip hot">Live screen understanding</span>
+          <span class="chip hot">Cross-system validation</span>
+        </div>
+        <p class="lede rv d5" style="margin-top:24px;font-size:20px">Three capabilities are
+          <b>in production today</b> — detailed on the following slides.</p>
+      </div>
+      <div class="win rv d3" style="max-width:560px;justify-self:center">
+        <div class="wbar"><span class="wdot wr"></span><span class="wdot wy"></span><span class="wdot wg"></span>
+          <span class="wt">savvy · assistant — live session</span></div>
+        <img src="shot-thinking.png" alt="Savvy assistant processing a request" class="sshot" style="height:640px;object-fit:cover;object-position:top">
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>EQINT GLOBAL · INTRODUCING SAVVY</span><span>EQINTGLOBAL.COM</span></div>
+</section>
+
+<!-- 5 · TOOL 1: PAYROLL RECONCILIATION -->
+<section class="slide">
+  <div class="pad" style="justify-content:center">
+    <div class="split">
+      <div>
+        <div class="kick rv d1">04 · Tool 01 — In Production</div>
+        <h2 class="rv d2" style="margin-top:22px;font-size:56px">Payroll <span class="g">Reconciliation</span></h2>
+        <p class="lede rv d3" style="margin-top:22px;font-size:21.5px"><b>The problem:</b> before every payday,
+          teams must prove that salaries, deductions and bank totals in Oracle match the payroll bureau —
+          hours of spreadsheet comparison, with money on the line.</p>
+        <p class="lede rv d4" style="margin-top:18px;font-size:21.5px"><b>With Savvy:</b> one click pulls both
+          sides, matches thousands of rows, and returns a clear verdict — every difference explained, ready
+          for audit. What took hours now takes minutes.</p>
+        <div class="chips rv d5" style="margin-top:28px">
+          <span class="chip hot">✓ Automated matching</span>
+          <span class="chip hot">✓ Explained differences</span>
+          <span class="chip hot">✓ Audit-ready output</span>
+        </div>
+      </div>
+      <div class="win rv d3">
+        <div class="wbar"><span class="wdot wr"></span><span class="wdot wy"></span><span class="wdot wg"></span>
+          <span class="wt">savvy · payroll reconciliation</span></div>
+        <div class="wbody">
+          <div class="prow"><span class="nm">Gross salaries</span> 1,240 rows <span class="badge ok">MATCHED</span></div>
+          <div class="prow"><span class="nm">Deductions</span> 986 rows <span class="badge ok">MATCHED</span></div>
+          <div class="prow"><span class="nm">Employer costs</span> 412 rows <span class="badge ok">MATCHED</span></div>
+          <div class="prow"><span class="nm">Bank transfer total</span> 1 row <span class="badge scan">VERIFYING…</span></div>
+          <div class="pbar"><div class="pfill"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>EQINT GLOBAL · PAYROLL RECONCILIATION</span><span>EQINTGLOBAL.COM</span></div>
+</section>
+
+<!-- 6 · TOOL 2: OCR SCREEN READER -->
+<section class="slide">
+  <div class="pad" style="justify-content:center">
+    <div class="split">
+      <div>
+        <div class="kick rv d1">05 · Tool 02 — In Production</div>
+        <h2 class="rv d2" style="margin-top:22px;font-size:56px">OCR <span class="b">Screen Reader</span></h2>
+        <p class="lede rv d3" style="margin-top:22px;font-size:21.5px"><b>The problem:</b> Oracle screens are
+          dense. Users lose time wondering what a page does, what a field means, or what to click next —
+          and support tickets pile up.</p>
+        <p class="lede rv d4" style="margin-top:18px;font-size:21.5px"><b>With Savvy:</b> press "Screen Guide"
+          and Savvy reads the live window with on-screen character recognition. It identifies the page,
+          explains every field in business language, and walks the user through the task — step by step.</p>
+        <div class="chips rv d5" style="margin-top:28px">
+          <span class="chip hot">👁 Reads any page live</span>
+          <span class="chip hot">🧭 Explains every field</span>
+          <span class="chip hot">🪜 Guides the next step</span>
+        </div>
+      </div>
+      <div class="win rv d3">
+        <div class="wbar"><span class="wdot wr"></span><span class="wdot wy"></span><span class="wdot wg"></span>
+          <span class="wt">savvy · screen guide — live ocr</span></div>
+        <div class="wbody">
+          <div class="scan">
+            <div class="tl w90 hl"></div><div class="tl w65"></div><div class="tl w80 hl"></div><div class="tl"></div>
+          </div>
+          <div class="frow">
+            <div class="fld">PAGE<b>Person Management</b></div>
+            <div class="fld">FIELD<b>Effective Date</b></div>
+            <div class="fld">NEXT STEP<b>Review Salary</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>EQINT GLOBAL · OCR SCREEN READER</span><span>EQINTGLOBAL.COM</span></div>
+</section>
+
+<!-- 7 · TOOL 3: DASHBOARD -->
+<section class="slide">
+  <div class="pad" style="justify-content:center">
+    <div class="split">
+      <div>
+        <div class="kick rv d1">06 · Tool 03 — In Production</div>
+        <h2 class="rv d2" style="margin-top:22px;font-size:56px">Workforce <span class="g">Dashboard</span></h2>
+        <p class="lede rv d3" style="margin-top:22px;font-size:21.5px"><b>The problem:</b> leadership questions
+          about headcount, absences, positions and locations each require a separate Oracle report —
+          exported, formatted and quickly out of date.</p>
+        <p class="lede rv d4" style="margin-top:18px;font-size:21.5px"><b>With Savvy:</b> a live command centre
+          drawn directly from Oracle HCM — headcount, FTE, positions, departments and payroll health at a
+          glance, with drill-down analytics for every metric. Always current. Zero exports.</p>
+        <div class="chips rv d5" style="margin-top:28px">
+          <span class="chip hot">📊 Live KPIs & analytics</span>
+          <span class="chip hot">🔄 Always current</span>
+          <span class="chip hot">🧊 Glass interface</span>
+        </div>
+      </div>
+      <div class="win rv d3">
+        <div class="wbar"><span class="wdot wr"></span><span class="wdot wy"></span><span class="wdot wg"></span>
+          <span class="wt">FUSION HCM Dashboard — live from Oracle HCM Cloud</span></div>
+        <img src="shot-dashboard.png" alt="Savvy Workforce Dashboard with live Oracle HCM data" class="sshot" style="height:auto">
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>EQINT GLOBAL · WORKFORCE DASHBOARD</span><span>EQINTGLOBAL.COM</span></div>
+</section>
+
+<!-- 8 · ROADMAP -->
+<section class="slide">
+  <div class="pad">
+    <div class="kick rv d1">07 · Product Roadmap</div>
+    <h2 class="rv d2" style="margin-top:26px">Already working. <span class="b">Still building.</span></h2>
+    <p class="lede rv d3" style="margin-top:20px">Beyond the three production tools, the Savvy platform is
+      actively developing these capabilities:</p>
+    <div class="road">
+      <div class="ritem rv d4"><span class="dotn">1</span>
+        <h3>Computer Use Agent <span class="tag">In development</span></h3>
+        <p>Savvy will operate Oracle on your instruction — navigating flows, completing forms and executing
+          multi-step tasks while you supervise.</p></div>
+      <div class="ritem rv d5"><span class="dotn">2</span>
+        <h3>BIP Report Generator <span class="tag">In development</span></h3>
+        <p>Describe any report in a sentence; Savvy writes, runs and schedules the BI Publisher report for you.</p></div>
+      <div class="ritem rv d6"><span class="dotn">3</span>
+        <h3>Policy Parser <span class="tag">In development</span></h3>
+        <p>Upload an HR policy document; Savvy converts it into structured rules and enforces them inside Oracle.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>EQINT GLOBAL · ROADMAP</span><span>EQINTGLOBAL.COM</span></div>
+</section>
+
+<!-- 9 · WHY EQINT -->
+<section class="slide">
+  <div class="pad" style="justify-content:center">
+    <div class="kick rv d1">08 · Why EQInt Global</div>
+    <h2 class="rv d2" style="margin-top:26px">AI with an Oracle partner <span class="g">behind it.</span></h2>
+    <p class="lede rv d3" style="margin-top:24px">Savvy isn't a generic chatbot bolted onto your systems.
+      It is built by Oracle Fusion specialists who implement and support these exact products every day —
+      and it comes with the backing of our full service organisation.</p>
+    <div class="cards c3 rv d4" style="margin-top:46px">
+      <div class="card"><div class="icn"><svg viewBox="0 0 24 24"><path d="M12 3l7 4v5c0 5-3.5 7.5-7 9-3.5-1.5-7-4-7-9V7z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <h3>Deep Oracle expertise</h3><p>15+ years across HCM, SCM and Finance implementations — Savvy is grounded in how enterprises actually run.</p></div>
+      <div class="card"><div class="icn"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+        <h3>24/7 support</h3><p>Round-the-clock Oracle support organisation stands behind every Savvy deployment.</p></div>
+      <div class="card"><div class="icn"><svg viewBox="0 0 24 24"><path d="M4 17l5-6 4 3 7-8"/><path d="M14 6h6v6"/></svg></div>
+        <h3>Custom AI solutions</h3><p>From Savvy to tailored AI consulting — we build assistants around your processes, not the other way round.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>EQINT GLOBAL · WHY EQINT</span><span>EQINTGLOBAL.COM</span></div>
+</section>
+
+<!-- 10 · CLOSE -->
+<section class="slide">
+  <div class="pad" style="justify-content:center;align-items:center;text-align:center">
+    <div class="kick rv d1" style="justify-content:center">EQInt Global · eqintglobal.com</div>
+    <h1 class="rv d2" style="font-size:96px;margin-top:36px">Savvy AI. <span class="g">Ready today.</span></h1>
+    <p class="lede rv d3" style="margin-top:30px;text-align:center;max-width:1000px">
+      Payroll you can trust. Screens that explain themselves. A dashboard that never sleeps.
+      Built by EQInt Global — your Oracle Fusion Cloud partner.</p>
+    <div class="chips rv d4" style="margin-top:48px;justify-content:center">
+      <span class="chip hot">🌐 eqintglobal.com</span>
+      <span class="chip">Book a <b>live demo</b></span>
+      <span class="chip">Talk to our <b>consultants</b></span>
+    </div>
+    <p class="rv d5 mono" style="margin-top:52px;color:var(--mut);font-size:15px;letter-spacing:.2em">THANK YOU</p>
+  </div>
+  <div class="foot"><span>EQINT GLOBAL</span><span><b>SAVVY AI</b> · 2026</span></div>
+</section>
+
+</main>
+</div>
+
+<div class="deck-controls">
+  <button id="prevBtn" aria-label="Previous">←</button>
+  <div class="pgcount" id="pgCount">1 / 10</div>
+  <button id="nextBtn" aria-label="Next">→</button>
+</div>
+
+<script>
+class SlidePresentation {
+  constructor(){
+    this.slides=[...document.querySelectorAll('.slide')];
+    this.i=0;
+    this.stage=document.getElementById('deckStage');
+    this.setupStageScale();
+    this.setupKeys();
+    this.setupTouch();
+    document.getElementById('nextBtn').onclick=()=>this.go(this.i+1);
+    document.getElementById('prevBtn').onclick=()=>this.go(this.i-1);
+    this.show(0);
+  }
+  setupStageScale(){
+    const scale=()=>{
+      const f=Math.min(innerWidth/1920,innerHeight/1080);
+      const x=(innerWidth-1920*f)/2, y=(innerHeight-1080*f)/2;
+      this.stage.style.transform=`translate(${x}px, ${y}px) scale(${f})`;
+    };
+    scale(); addEventListener('resize',scale);
+  }
+  setupKeys(){
+    addEventListener('keydown',e=>{
+      if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();this.go(this.i+1)}
+      if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();this.go(this.i-1)}
+      if(e.key==='Home')this.go(0); if(e.key==='End')this.go(this.slides.length-1);
+    });
+    addEventListener('wheel',(()=>{let t=0;return e=>{
+      const now=Date.now(); if(now-t<650)return;
+      if(e.deltaY>40){t=now;this.go(this.i+1)} else if(e.deltaY<-40){t=now;this.go(this.i-1)}
+    }})());
+  }
+  setupTouch(){
+    let x0=0;
+    addEventListener('touchstart',e=>x0=e.touches[0].clientX,{passive:true});
+    addEventListener('touchend',e=>{
+      const d=e.changedTouches[0].clientX-x0;
+      if(d<-50)this.go(this.i+1); if(d>50)this.go(this.i-1);
+    },{passive:true});
+  }
+  go(n){ this.show(Math.max(0,Math.min(this.slides.length-1,n))); }
+  show(n){
+    this.i=n;
+    this.slides.forEach((s,k)=>{
+      s.classList.remove('active','visible');
+      if(k===n){ void s.offsetWidth; /* restart CSS animations on re-entry */
+        s.classList.add('active','visible'); }
+    });
+    document.getElementById('pgCount').textContent=(n+1)+' / '+this.slides.length;
+  }
+}
+new SlidePresentation();
+</script>
+</body>
+</html>

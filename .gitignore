@@ -60,4 +60,8 @@ coverage/
 
 # Submodules (don't ignore - they're part of the repo)
 # eqint-savvy-desktop/
-# hcm-ai-agent/
+# hcm-ai-agent/eqint-savvy-presentation/node_modules/
+eqint-savvy-presentation/shot-*.png
+eqint-savvy-presentation/slide-*.png
+eqint-savvy-presentation/*.pptx
+.freebuff/
